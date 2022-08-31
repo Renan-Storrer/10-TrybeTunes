@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { getUser } from '../services/userAPI';
 import Loading from '../pages/Loading';
 
@@ -26,6 +27,9 @@ class Header extends React.Component {
     return (
       <header data-testid="header-component">
         <h1 data-testid="header-user-name">{`Olá ${userName}!`}</h1>
+        <Link to="/search" data-testid="link-to-search">Pesquisar</Link>
+        <Link to="/favorites" data-testid="link-to-favorites">Musicas favoritadas</Link>
+        <Link to="/profile" data-testid="link-to-profile">Meu perfil</Link>
       </header>
     );
   }
