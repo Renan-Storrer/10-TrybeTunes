@@ -84,7 +84,7 @@ class Search extends React.Component {
         )}
         { message && (
           <h2>
-            {`Albuns de ${searchInput}` }
+            {`Resultado de álbuns de: ${searchInput}` }
           </h2>
         )}
         { data.length === 0 ? (
