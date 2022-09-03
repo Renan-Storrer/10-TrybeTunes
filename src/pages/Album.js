@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 import Header from '../components/Header';
 import MusicCard from '../components/MusicCard';
@@ -26,11 +27,11 @@ class Album extends Component {
     return (
       <div data-testid="page-album">
         <Header />
-        <h1 data-testid="artist-name">{albumCollection.artistName}</h1>
+        <h4 data-testid="artist-name">{albumCollection.artistName}</h4>
         <h2 data-testid="album-name">{albumCollection.collectionName}</h2>
         {albumTracks.map(({ trackName, previewUrl }) => (
           <MusicCard
-            key={ previewUrl }
+            key={ trackName }
             trackName={ trackName }
             previewUrl={ previewUrl }
           />
