@@ -1,39 +1,23 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import React, { Component } from 'react';
 
-class Card extends React.Component {
+class CardAlbum extends Component {
   render() {
-    const {
-      artistName,
-      collectionName,
-      artworkUrl100,
-      collectionId,
-    } = this.props;
+    const { collectionName, artworkUrl100, artistName } = this.props;
     return (
       <div>
-        <Link
-          data-testid={ `link-to-album-${collectionId}` }
-          to={ `/album/${collectionId}` }
-        >
-
-          <br />
-          <img src={ artworkUrl100 } alt={ artistName } />
-          <h4>{artistName}</h4>
-          <h5>{collectionName}</h5>
-          <br />
-
-        </Link>
+        <img src={ artworkUrl100 } alt={ collectionName } />
+        <h4>{collectionName}</h4>
+        <p>{artistName}</p>
       </div>
     );
   }
 }
 
-Card.propTypes = {
-  artistName: PropTypes.string.isRequired,
-  collectionName: PropTypes.string.isRequired,
-  artworkUrl100: PropTypes.string.isRequired,
-  collectionId: PropTypes.number.isRequired,
-};
+CardAlbum.propTypes = {
+  artistName: PropTypes.string,
+  artworkUrl100: PropTypes.string,
+  collectionName: PropTypes.string,
+}.isRequired;
 
-export default Card;
+export default CardAlbum;

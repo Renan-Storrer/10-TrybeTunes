@@ -1,104 +1,98 @@
-import React from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+
+import { Link } from 'react-router-dom';
 
 import Header from '../components/Header';
-import CardAlbum from '../components/CardAlbum';
 import Loading from './Loading';
+import CardAlbum from '../components/CardAlbum';
 
 import searchAlbumsAPI from '../services/searchAlbumsAPI';
 
-class Search extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      offButton: true,
-      search: '',
-      searchInput: '',
-      loading: false,
-      message: false,
-      data: [],
-    };
-  }
+export default class Search extends Component {
+  state = {
+    searchText: '',
+    searchedArtist: '',
+    isBtnDisabled: true,
+    isLoading: false,
+    isLoaded: false,
+    response: '' };
 
-  handleChangeInput = ({ target }) => {
-    const { value } = target;
-    const minInput = 2;
-    this.setState({
-      search: value,
-    }, () => {
-      if (value.length >= minInput) {
-        return this.setState({ offButton: false });
-      }
-      return this.setState({ offButton: true });
+  handleChange = ({ target }) => {
+    const { name, value } = target;
+    const minLength = 2;
+    this.setState({ [name]: value }, () => {
+      this.setState({ isBtnDisabled: value.length < minLength });
     });
   };
 
-  handleChangeClick = async () => {
-    const { search } = this.state;
+  handleRequisition = async (searchText) => {
+    this.setState({ isLoading: true, searchedArtist: searchText });
+    const response = await searchAlbumsAPI(searchText);
+    this.setState({ isLoaded: true, response, isLoading: false, searchText: '' });
+  };
 
-    this.setState({
-      offButton: false,
-      loading: true,
-      searchInput: search,
-    });
-
-    const response = await searchAlbumsAPI(search);
-
-    this.setState({
-      loading: false,
-      message: true,
-      data: response,
-      search: '',
-    });
+  artistCard = (response) => {
+    if (response.length === 0) {
+      return <p>Nenhum álbum foi encontrado</p>;
+    }
+    return response
+      .map(({ collectionName, artworkUrl100, artistName, collectionId }) => (
+        <Link
+          key={ collectionId }
+          to={ `/album/${collectionId}` }
+          data-testid={ `link-to-album-${collectionId}` }
+        >
+          <CardAlbum
+            collectionName={ collectionName }
+            artworkUrl100={ artworkUrl100 }
+            artistName={ artistName }
+          />
+        </Link>
+      ));
   };
 
   render() {
-    const { search,
-      offButton,
-      loading,
-      message,
-      data,
-      searchInput,
-    } = this.state;
+    const { searchText,
+      isBtnDisabled,
+      isLoading,
+      isLoaded,
+      response,
+      searchedArtist } = this.state;
+    const isFound = response.length > 0;
+    const searchTitle = <p>{`Resultado de álbuns de: ${searchedArtist}`}</p>;
+    const formConditional = (
+      <form>
+        <input
+          type="text"
+          data-testid="search-artist-input"
+          name="searchText"
+          value={ searchText }
+          onChange={ this.handleChange }
+        />
+        <button
+          type="button"
+          data-testid="search-artist-button"
+          disabled={ isBtnDisabled }
+          onClick={ () => this.handleRequisition(searchText) }
+        >
+          Pesquisar 🔎
+        </button>
+      </form>
+    );
     return (
       <div data-testid="page-search">
         <Header />
-        { loading ? <Loading /> : (
-          <form>
-            <label htmlFor="search-input">
-              <input
-                data-testid="search-artist-input"
-                value={ search }
-                onChange={ this.handleChangeInput }
-              />
-            </label>
-            <button
-              data-testid="search-artist-button"
-              type="button"
-              disabled={ offButton }
-              onClick={ this.handleChangeClick }
-            >
-              Pesquisar 🔎
-            </button>
-
-          </form>
-        )}
-        { message && (
-          <h2>
-            {`Resultado de álbuns de: ${searchInput}` }
-          </h2>
-        )}
-        { data.length === 0 ? (
-          <p>Desculpe! Nenhum álbum foi encontrado 😔</p>
-        ) : data.map((item, index) => (
-          <CardAlbum
-            key={ index }
-            artistName={ item.artistName }
-            collectionName={ item.collectionName }
-            artworkUrl100={ item.artworkUrl100 }
-            collectionId={ item.collectionId }
-          />))}
+        { !isLoading ? formConditional : null }
+        { isLoading && <Loading /> }
+        { isLoaded && !isLoading && isFound && searchTitle }
+        { isLoaded && this.artistCard(response) }
       </div>
     );
   }
 }
-export default Search;
+Search.propTypes = {
+  response: PropTypes.shape({
+    map: PropTypes.func,
+  }),
+}.isRequired;
