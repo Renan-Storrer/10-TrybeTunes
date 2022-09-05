@@ -22,9 +22,7 @@ class MusicCard extends Component {
     this.setState({
       isLoading: true,
     });
-    console.log(1, track);
     await addSong(track);
-    console.log(2);
     this.setState({
       isLoading: false,
       isChecked: true,
@@ -46,7 +44,6 @@ class MusicCard extends Component {
             <code>audio</code>
             .
           </audio>
-
           <label htmlFor="Favoritos">
             Favorita
             <input
