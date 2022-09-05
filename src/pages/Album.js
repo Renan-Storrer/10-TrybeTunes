@@ -1,48 +1,110 @@
-import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-
+import React from 'react';
+import getMusics from '../services/musicsAPI';
 import Header from '../components/Header';
 import MusicCard from '../components/MusicCard';
+import Loading from './Loading';
+import { addSong, getFavoriteSongs } from '../services/favoriteSongsAPI';
 
-import getMusics from '../services/musicsAPI';
-
-class Album extends Component {
+class Album extends React.Component {
   state = {
-    albumCollection: {},
-    albumTracks: [],
+    artistName: '',
+    albumName: '',
+    favoritesSongsId: [],
+    isLoading: true,
+    tracks: [],
   };
 
-  async componentDidMount() {
-    const { match: { params: { id } } } = this.props;
-    const albumData = await getMusics(id);
-    const albumCollection = albumData.filter((_, i) => i === 0)[0];
-    const albumTracks = albumData.filter((_, i) => i !== 0);
-    this.setState({ albumCollection, albumTracks });
+  componentDidMount() {
+    const { match } = this.props;
+    const { params } = match;
+    const { id } = params;
+    this.fetchMusics(id);
   }
 
+  fetchFavoriteMusics = async (id) => {
+    this.setState(
+      {
+        isLoading: true,
+      },
+      async () => {
+        const songList = await getFavoriteSongs();
+        const response = await addSong(id);
+        if (response === 'OK') {
+          this.setState((previousState) => ({
+            favoritesSongsId: [...previousState.favoritesSongsId, id, songList],
+            isLoading: false,
+          }));
+        }
+      },
+    );
+  };
+
+  handleChange = ({ target }) => {
+    const { name } = target;
+    const value = target.type === 'checkbox' ? target.checked : target.value;
+
+    this.setState(
+      {
+        [name]: value,
+      },
+      () => this.fetchFavoriteMusics(target.id),
+    );
+  };
+
+  fetchMusics = async (id) => {
+    const request = await getMusics(id);
+    const songList = await getFavoriteSongs();
+    const albumName = request[0].collectionName;
+    const { artistName } = request[0];
+    const tracks = request.filter((_e, i) => i > 0);
+    this.setState({
+      favoritesSongsId: [...songList],
+      isLoading: false,
+      albumName,
+      artistName,
+      tracks: [...tracks],
+    });
+  };
+
   render() {
-    const { albumCollection, albumTracks } = this.state;
-    console.log(albumCollection);
-    console.log(albumTracks);
+    const { tracks, albumName, artistName, isLoading, favoritesSongsId } = this.state;
     return (
       <div data-testid="page-album">
         <Header />
-        <h4 data-testid="artist-name">{albumCollection.artistName}</h4>
-        <h2 data-testid="album-name">{albumCollection.collectionName}</h2>
-        {albumTracks.map(({ trackName, previewUrl }) => (
-          <MusicCard
-            key={ trackName }
-            trackName={ trackName }
-            previewUrl={ previewUrl }
-          />
-        ))}
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <div>
+            <h1 data-testid="album-name">{albumName}</h1>
+            <h2 data-testid="artist-name">{artistName}</h2>
+            {tracks.map(({ trackName, previewUrl, trackId, trackNumber }) => (
+              <MusicCard
+                trackName={ trackName }
+                previewUrl={ previewUrl }
+                key={ trackId }
+                trackId={ trackId }
+                trackNumber={ trackNumber }
+                name="targetCheck"
+                onChange={ this.handleChange }
+                checked={ favoritesSongsId.some(
+                  (e) => e === trackId.toString() || e.trackId === trackId,
+                ) }
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 }
 
 Album.propTypes = {
-  match: PropTypes.string,
-}.isRequired;
+  match: PropTypes.shape({
+    params: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
 
 export default Album;
